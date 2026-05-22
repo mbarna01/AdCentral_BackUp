@@ -16,7 +16,7 @@ BEGIN
         STRUCT('AGExtintores' AS cliente, 'AGExtintores_Ds' AS dataset_origen, 'Dm_Tb_Performance' AS tabla_origen),
 
         -- Abastecedora Duran
-        STRUCT('AbastecedoraDuran', 'AbastecedoraDuran', 'Dm_Tb_Performance'),
+        STRUCT('AbastecedoraDuran', 'AbastecedoraDuran_Ds', 'Dm_Tb_Performance'),
 
         -- Aceros Altavista.
         STRUCT('AcerosAltavista', AcerosAltavista_Ds', 'Dm_Tb_Performance'),
@@ -224,9 +224,7 @@ BEGIN
 
         -- Finance
         STRUCT('Finance', 'Finance_Ds', 'Fn_Tb_Source'),
-        STRUCT('Finance', 'Finance_Ds', 'Fn_Tb_Source_Historico'),
-
-        
+        STRUCT('Finance', 'Finance_Ds', 'Fn_Tb_Source_Historico')    
     ])
   ) DO
     EXECUTE IMMEDIATE FORMAT("""
