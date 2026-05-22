@@ -1,0 +1,238 @@
+config {
+  type: "operations",
+  hasOutput: false,
+  tags: ["snapshots", "snapshot_setup"],
+  description: "Crea o reemplaza la stored procedure que genera snapshots de las tablas críticas por cliente."
+}
+
+CREATE OR REPLACE PROCEDURE `lob-adcentral.Snapshots_Ds.sp_crear_snapshots`()
+BEGIN
+  DECLARE fecha STRING DEFAULT FORMAT_DATE('%Y%m%d', CURRENT_DATE());
+
+  FOR tabla IN (
+    SELECT *
+    FROM UNNEST([
+        -- AGExtintores
+        STRUCT('AGExtintores' AS cliente, 'AGExtintores_Ds' AS dataset_origen, 'Dm_Tb_Performance' AS tabla_origen),
+
+        -- Abastecedora Duran
+        STRUCT('AbastecedoraDuran', 'AbastecedoraDuran', 'Dm_Tb_Performance'),
+
+        -- Aceros Altavista.
+        STRUCT('AcerosAltavista', AcerosAltavista_Ds', 'Dm_Tb_Performance'),
+
+        -- Acondicionamiento de Aires.
+        STRUCT('AcondicionamientodeAires', 'AcondicionamientodeAires_Ds', 'Dm_Tb_Performance'),
+
+        -- Alba Industriales.
+        STRUCT('AlbaIndustriales', 'AlbaIndustriales_Ds', 'Dm_Tb_Performance'),
+
+        -- Aleaciones Especiales.
+        STRUCT('AleacionesEspeciales', 'AleacionesEspeciales_Ds', 'Dm_Tb_Performance'),
+
+        -- Ancon Renta Car.
+        STRUCT('AnconRentaCar', 'AnconRentaCar_Ds', 'Dm_Tb_Performance'),
+
+        -- Andamios Alamos.
+        STRUCT('AndamiosAlamos', 'AndamiosAlamos_Ds', 'Dm_Tb_Performance'),
+
+        -- Argal.
+        STRUCT('Argal', 'Argal_Ds', 'Dm_Tb_Performance'),
+
+        -- Ariel Impresiones.
+        STRUCT('ArielImpresiones', 'ArielImpresiones_Ds', 'Dm_Tb_Performance'),
+
+        -- Ark Hostek.
+        STRUCT('ArkHostek', 'ArkHostek_Ds', 'Dm_Tb_Performance'),
+
+        -- Asbestos.
+        STRUCT('Asbestos', 'Asbestos_Ds', 'Dm_Tb_Performance'),
+
+        -- Ascendum.
+        STRUCT('Ascendum', 'Ascendum_Ds', 'Dm_Tb_Performance'),
+
+        -- Besim Consultores.
+        STRUCT('BesimConsultores', 'BesimConsultores_Ds', 'Dm_Tb_Performance'),
+
+        -- Bioback2Green.
+        STRUCT('Bioback2Green', 'Bioback2Green_Ds', 'Dm_Tb_Performance'),
+
+        -- British Royal.
+        STRUCT('BritishRoyal', 'BritishRoyal_Ds', 'Dm_Tb_Performance'),
+
+        -- Brive 2025.
+        STRUCT('Brive2025', 'Brive2025_Ds', 'Dm_Tb_Performance'),
+
+        -- Bucefalia.
+        STRUCT('Bucefalia', 'Bucefalia_Ds', 'Dm_Tb_Performance'),
+
+        -- Buscapolizas.
+        STRUCT('Buscapolizas', 'Buscapolizas_Ds', 'Dm_Tb_Performance'),
+
+        -- Bypass Gastrico.
+        STRUCT('BypassGastrico', 'BypassGastrico_Ds', 'Dm_Tb_Performance'),
+
+        -- Cajas De Carton.
+        STRUCT('CajasDeCarton', 'CajasDeCarton_Ds', 'Dm_Tb_Performance'),
+
+        -- Colash.
+        STRUCT('Colash', 'Colash_Ds', 'Dm_Tb_Performance'),
+
+        -- Expansion Corporativa.
+        STRUCT('ExpansionCorporativa', 'ExpansionCorporativa_Ds', 'Dm_Tb_Performance'),
+
+        -- Experiencia de Viaje.
+        STRUCT('ExperienciadeViaje', 'ExperienciadeViaje_Ds', 'Dm_Tb_Performance'),
+
+        -- Floreria Cleo.
+        STRUCT('FloreriaCleo', 'FloreriaCleo_Ds', 'Dm_Tb_Performance'),
+
+        -- Gadget House.
+        STRUCT('GadgetHouse', 'GadgetHouse_Ds', 'Dm_Tb_Performance'),
+
+        -- Germany Clean.
+        STRUCT('GermanyClean', 'GermanyClean_Ds', 'Dm_Tb_Performance'),
+
+        -- Gluup.
+        STRUCT('Gluup', 'Gluup_Ds', 'Dm_Tb_Performance'),
+
+        -- Inm360.
+        STRUCT('Inm360', 'Inm360_Ds', 'Dm_Tb_Performance'),
+
+        -- Jarking.
+        STRUCT('Jarking', 'Jarking_Ds', 'Dm_Tb_Performance'),
+
+        -- Ladolce Nicole.
+        STRUCT('LadolceNicole', 'LadolceNicole_Ds', 'Dm_Tb_Performance'),
+
+        -- Linda Mariposa.
+        STRUCT('LindaMariposa', 'LindaMariposa_Ds', 'Dm_Tb_Performance'),
+
+        -- Marbel CyP.
+        STRUCT('MarbelCyP', 'MarbelCyP_Ds', 'Dm_Tb_Performance'),
+
+        -- Mariachi Juvenil.
+        STRUCT('MariachiJuvenil', 'MariachiJuvenil_Ds', 'Dm_Tb_Performance'),
+
+        -- Materiales San Cayetano.
+        STRUCT('MaterialesSanCayetano', 'MaterialesSanCayetano_Ds', 'Dm_Tb_Performance'),
+
+        -- Mesa Sana.
+        STRUCT('MesaSana', 'MesaSana_Ds', 'Dm_Tb_Performance'),
+
+        -- Mojigangas Allende.
+        STRUCT('MojigangasAllende', 'MojigangasAllende_Ds', 'Dm_Tb_Performance'),
+
+        -- Mombola Kids.
+        STRUCT('MombolaKids', 'MombolaKids_Ds', 'Dm_Tb_Performance'),
+
+        -- Montacargas MH.
+        STRUCT('MontacargasMH', 'MontacargasMH_Ds', 'Dm_Tb_Performance'),
+
+        -- Mr Licencias.
+        STRUCT('MrLicencias', 'MrLicencias_Ds', 'Dm_Tb_Performance'),
+
+        -- Mr Tenis.
+        STRUCT('MrTenis', 'MrTenis_Ds', 'Dm_Tb_Performance'),
+
+        -- New Toner MX.
+        STRUCT('NewTonerMX', 'NewTonerMX_Ds', 'Dm_Tb_Performance'),
+
+        -- Ohganics MX.
+        STRUCT('OhganicsMX', 'OhganicsMX_Ds', 'Dm_Tb_Performance'),
+
+        -- Pet Fresh.
+        STRUCT('PetFresh', 'PetFresh_Ds', 'Dm_Tb_Performance'),
+
+        -- Pickeball Condesa.
+        STRUCT('PickeballCondesa', 'PickeballCondesa_Ds', 'Dm_Tb_Performance'),
+
+        -- Puertas Automaticas Jalisco.
+        STRUCT('PuertasAutomaticasJalisco', 'PuertasAutomaticasJalisco_Ds', 'Dm_Tb_Performance'),
+
+        -- Ral Equipos de Elevacion.
+        STRUCT('RalEquiposdeElevacion', 'RalEquiposdeElevacion_Ds', 'Dm_Tb_Performance'),
+
+        -- Regeneris Therapy.
+        STRUCT('RegenerisTherapy', 'RegenerisTherapy_Ds', 'Dm_Tb_Performance'),
+
+        -- Ricoh Mexicana RMX.
+        STRUCT('RicohMexicanaRMX', 'RicohMexicanaRMX_Ds', 'Dm_Tb_Performance'),
+
+        -- Sandras Catering.
+        STRUCT('SandrasCatering', 'SandrasCatering_Ds', 'Dm_Tb_Performance'),
+
+        -- Shinsei Spa.
+        STRUCT('ShinseiSpa', 'ShinseiSpa_Ds', 'Dm_Tb_Performance'),
+
+        -- Sisime.
+        STRUCT('Sisime', 'Sisime_Ds', 'Dm_Tb_Performance'),
+
+        -- Skn Care Group.
+        STRUCT('SknCareGroup', 'SknCareGroup_Ds', 'Dm_Tb_Performance'),
+
+        -- Soluciones On Digital.
+        STRUCT('SolucionesOnDigital', 'SolucionesOnDigital_Ds', 'Dm_Tb_Performance'),
+
+        -- Suisse Time.
+        STRUCT('SuisseTime', 'SuisseTime_Ds', 'Dm_Tb_Performance'),
+
+        -- Suplementos Pro.
+        STRUCT('SuplementosPro', 'SuplementosPro_Ds', 'Dm_Tb_Performance'),
+
+        -- TVOFERTAS.
+        STRUCT('TVOFERTAS', 'TVOFERTAS_Ds', 'Dm_Tb_Performance'),
+
+        -- Tiendas Quality.
+        STRUCT('TiendasQuality', 'TiendasQuality_Ds', 'Dm_Tb_Performance'),
+
+        -- Tilc Ok.
+        STRUCT('TilcOk', 'TilcOk_Ds', 'Dm_Tb_Performance'),
+
+        -- Topica Media.
+        STRUCT('TopicaMedia', 'TopicaMedia_Ds', 'Dm_Tb_Performance'),
+
+        -- Transportes Vala.
+        STRUCT('TransportesVala', 'TransportesVala_Ds', 'Dm_Tb_Performance'),
+
+        -- Triptlan.
+        STRUCT('Triptlan', 'Triptlan_Ds', 'Dm_Tb_Performance'),
+
+        -- VG Tapetes.
+        STRUCT('VGTapetes', 'VGTapetes_Ds', 'Dm_Tb_Performance'),
+
+        -- Vanebon.
+        STRUCT('Vanebon', 'Vanebon_Ds', 'Dm_Tb_Performance'),
+
+        -- Veve Suplementos.
+        STRUCT('VeveSuplementos', 'VeveSuplementos_Ds', 'Dm_Tb_Performance'),
+
+        -- Viveros el Aguate.
+        STRUCT('ViveroselAguate', 'ViveroselAguate_Ds', 'Dm_Tb_Performance'),
+
+        -- Web Scraping.
+        STRUCT('WebScraping', 'WebScraping_Ds', 'Dm_Tb_Performance'),
+
+        -- Were House Lift.
+        STRUCT('WereHouseLift', 'WereHouseLift_Ds', 'Dm_Tb_Performance'),
+
+        -- Wingstop Parroquia.
+        STRUCT('WingstopParroquia', 'WingstopParroquia_Ds', 'Dm_Tb_Performance'),
+
+        -- Paid Performance.
+        STRUCT('PaidPerformance', 'PaidPerformance_Ds', 'Dm_Tb_Campaigns'),
+
+        -- Finance
+        STRUCT('Finance', 'Finance_Ds', 'Fn_Tb_Source'),
+        STRUCT('Finance', 'Finance_Ds', 'Fn_Tb_Source_Historico'),
+
+        
+    ])
+  ) DO
+    EXECUTE IMMEDIATE FORMAT("""
+      CREATE SNAPSHOT TABLE IF NOT EXISTS `lob-adcentral.Snapshots_Ds.%s__%s__%s`
+      CLONE `lob-adcentral.%s.%s`
+      OPTIONS (expiration_timestamp = TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 DAY))
+    """, tabla.cliente, tabla.tabla_origen, fecha, tabla.dataset_origen, tabla.tabla_origen);
+  END FOR;
+END;

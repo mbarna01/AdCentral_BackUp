@@ -1,0 +1,9 @@
+config {
+  type: "operations",
+  hasOutput: false,
+  dependencies: ["sp_crear_snapshots"],
+  tags: ["snapshots", "snapshots_run"],
+  description: "Ejecuta la stored procedure de snapshots para crear los respaldos diarios."
+}
+
+CALL `lob-adcentral.Snapshots_Ds.sp_crear_snapshots`();
