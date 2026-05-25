@@ -1,0 +1,38 @@
+config {
+  type: "view",
+  schema: "Vistas",
+  name: "Dm_Vw_Performance_Region",
+  description: "Vista de performance con la columna de Region de clientes basada en la tabla final de performance.",
+  tags: ["vistas", "performance", "region"]
+}
+
+SELECT
+  Ingestion,
+  Platform,
+  Account_ID,
+  Account,
+  Campaign_objective_type,
+  Campaign_ID,
+  Campaign,
+  Ad_group_ID,
+  Ad_group,
+  Ad_ID,
+  Ad_name,
+  Ad_final_URL,
+  Region,
+  Year,
+  Month,
+  Details.Datex AS Datex,
+  Details.Impressions AS Impressions,
+  Details.Clicks AS Clicks,
+  Details.Cost AS Cost,
+  Details.Link_Clicks AS Link_Clicks,
+  Details.Reach as Reach,
+  Details.Conversions as Conversions,
+  Details.Video_Play_Actions as Video_Play_Actions,
+  Details.Video_Completions as Video_Completions,
+  Source,
+  Batch
+FROM `lob-adcentral.AcerosAltavista_Ds.Dm_Tb_Performance`,
+UNNEST (Details) as Details
+WHERE Region is not null;

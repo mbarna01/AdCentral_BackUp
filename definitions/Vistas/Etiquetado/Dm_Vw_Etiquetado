@@ -1,0 +1,17 @@
+config {
+  type: "view",
+  schema: "Vistas",
+  name: "Dm_Vw_Etiquetado",
+  description: "Vista de etiquetado de clientes basada en la vista final de performance.",
+  tags: ["vistas", "etiquetado"]
+}
+
+SELECT
+    Account,
+    Campaign_ID,
+    Campaign,
+    Source,
+    Datex
+FROM lob-adcentral.AnconRentaCar_Ds.Dm_Vw_Performance_Device
+GROUP BY 
+    Account, Campaign_ID, Campaign, Source, Datex;

@@ -1,0 +1,172 @@
+config {
+  type: "view",
+  schema: "Vistas",
+  name: "Dm_Vw_Behaviour",
+  description: "Vista de seguimiento de los clientes basada en la vista final de performance.",
+  tags: ["Vistas", "etiquetado", "seguimiento"]
+}
+
+WITH 
+-- 1️⃣ Generamos los últimos 15 días (terminando en AYER)
+ultimos_15_dias AS (
+  SELECT Datex
+  FROM UNNEST(GENERATE_DATE_ARRAY(
+    DATE_SUB(CURRENT_DATE(), INTERVAL 15 DAY),   -- hace 15 días
+    DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)     -- AYER
+  )) AS Datex
+),
+
+-- 2️⃣ Última fecha real de carga para verificar si hay data reciente
+info_ultima_carga AS (
+  SELECT MAX(Datex) AS ultima_fecha_real
+  FROM `lob-adcentral.AnconRentaCar_Ds.Dm_Vw_Performance_Device`
+),
+
+-- 3️⃣ Métricas base: Impressions, Clicks, Costs
+kpi_unpivot AS (
+  -- Impressions
+  SELECT
+    Account,
+    Campaign_ID,
+    Campaign,
+    Source,
+    Datex,
+    'impressions' AS KPI,
+    SUM(Impressions) AS valor
+  FROM `lob-adcentral.AnconRentaCar_Ds.Dm_Vw_Performance_Device`
+  WHERE Datex BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 15 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
+  GROUP BY Account, Campaign_ID, Campaign, Source, Datex
+
+  UNION ALL
+
+  -- Clicks
+  SELECT
+    Account,
+    Campaign_ID,
+    Campaign,
+    Source,
+    Datex,
+    'clicks' AS KPI,
+    SUM(Clicks) AS valor
+  FROM `lob-adcentral.AnconRentaCar_Ds.Dm_Vw_Performance_Device`
+  WHERE Datex BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 15 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
+  GROUP BY Account, Campaign_ID, Campaign, Source, Datex
+
+  UNION ALL
+
+  -- Costs
+  SELECT
+    Account,
+    Campaign_ID,
+    Campaign,
+    Source,
+    Datex,
+    'costs' AS KPI,
+    SUM(Cost) AS valor
+  FROM `lob-adcentral.AnconRentaCar_Ds.Dm_Vw_Performance_Device`
+  WHERE Datex BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 15 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
+  GROUP BY Account, Campaign_ID, Campaign, Source, Datex
+),
+
+-- 4️⃣ Calcular medianas por campaña y KPI
+medianas AS (
+  SELECT
+    Campaign_ID,
+    Campaign,
+    Source,
+    KPI,
+    APPROX_QUANTILES(valor, 2)[OFFSET(1)] AS mediana
+  FROM kpi_unpivot
+  GROUP BY Campaign_ID, Campaign, Source, KPI
+),
+
+-- 5️⃣ Clasificar valores según la mediana (verde, amarillo, gris)
+comparado AS (
+  SELECT
+    k.Account AS Client,
+    k.Campaign_ID,
+    k.Campaign,
+    k.Source,
+    k.KPI,
+    k.Datex,
+    CASE
+      WHEN k.valor IS NULL OR k.valor = 0 THEN 'gris'
+      WHEN k.valor < m.mediana THEN 'amarillo'
+      ELSE 'verde'
+    END AS estado
+  FROM kpi_unpivot k
+  JOIN medianas m
+    ON k.Campaign_ID = m.Campaign_ID
+   AND k.Campaign = m.Campaign
+   AND k.Source = m.Source
+   AND k.KPI = m.KPI
+),
+
+-- 6️⃣ Base expandida para garantizar los 15 días completos
+base_completa AS (
+  SELECT DISTINCT
+    c.Account AS Client,
+    c.Campaign_ID,
+    c.Campaign,
+    c.Source,
+    c.KPI,
+    d.Datex
+  FROM (
+    SELECT DISTINCT Account, Campaign_ID, Campaign, Source, KPI
+    FROM kpi_unpivot
+  ) c
+  CROSS JOIN ultimos_15_dias d
+),
+
+-- 7️⃣ Unión final con fallback gris (si falta información)
+resultado_normal AS (
+  SELECT
+    b.Client,
+    b.Campaign_ID,
+    b.Campaign,
+    b.Source,
+    b.KPI,
+    CURRENT_DATE() AS Fecha,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 15 DAY), c.estado, NULL)) AS Dia_1,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY), c.estado, NULL)) AS Dia_2,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY), c.estado, NULL)) AS Dia_3,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 12 DAY), c.estado, NULL)) AS Dia_4,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 11 DAY), c.estado, NULL)) AS Dia_5,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 10 DAY), c.estado, NULL)) AS Dia_6,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 9 DAY), c.estado, NULL)) AS Dia_7,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 8 DAY), c.estado, NULL)) AS Dia_8,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY), c.estado, NULL)) AS Dia_9,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY), c.estado, NULL)) AS Dia_10,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 5 DAY), c.estado, NULL)) AS Dia_11,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY), c.estado, NULL)) AS Dia_12,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY), c.estado, NULL)) AS Dia_13,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY), c.estado, NULL)) AS Dia_14,
+    MAX(IF(b.Datex = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY), c.estado, NULL)) AS Dia_15
+  FROM base_completa b
+  LEFT JOIN comparado c
+    ON b.Client = c.Client
+   AND b.Campaign_ID = c.Campaign_ID
+   AND b.Campaign = c.Campaign
+   AND b.Source = c.Source
+   AND b.KPI = c.KPI
+   AND b.Datex = c.Datex
+  GROUP BY b.Client, b.Campaign_ID, b.Campaign, b.Source, b.KPI
+)
+
+-- 8️⃣ Unión final: si no hay data, mostrar aviso de última carga
+SELECT * FROM resultado_normal
+
+UNION ALL
+
+SELECT
+  'Ancon Rent a Car' AS Client,
+  'NO_DATA' AS Campaign_ID,
+  CONCAT('⚠️ SIN DATOS RECIENTES - Última carga: ', CAST(ultima_fecha_real AS STRING)) AS Campaign,
+  'Sistema' AS Source,
+  'Estado' AS KPI,
+  CURRENT_DATE() AS Fecha,
+  'gris' AS Dia_1, 'gris' AS Dia_2, 'gris' AS Dia_3, 'gris' AS Dia_4, 'gris' AS Dia_5,
+  'gris' AS Dia_6, 'gris' AS Dia_7, 'gris' AS Dia_8, 'gris' AS Dia_9, 'gris' AS Dia_10,
+  'gris' AS Dia_11, 'gris' AS Dia_12, 'gris' AS Dia_13, 'gris' AS Dia_14, 'gris' AS Dia_15
+FROM info_ultima_carga
+WHERE NOT EXISTS (SELECT 1 FROM resultado_normal);
