@@ -19,7 +19,7 @@ BEGIN
         STRUCT('AbastecedoraDuran', 'AbastecedoraDuran_Ds', 'Dm_Tb_Performance'),
 
         -- Aceros Altavista.
-        STRUCT('AcerosAltavista', AcerosAltavista_Ds', 'Dm_Tb_Performance'),
+        STRUCT('AcerosAltavista', 'AcerosAltavista_Ds', 'Dm_Tb_Performance'),
 
         -- Acondicionamiento de Aires.
         STRUCT('AcondicionamientodeAires', 'AcondicionamientodeAires_Ds', 'Dm_Tb_Performance'),
